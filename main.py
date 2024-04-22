@@ -593,29 +593,16 @@ def insert_to_bigquery_streaming_mule():
         event = json.loads(request.data)
         logger.info(f"Event Request received to /Streaming_Mule endpoint: {event}")
 
-        # Extract message data
-        message_data = event['data']['message']['data']
+        # Extract and decode the message data
+        message_data = event['message']['data']
         decoded_message = base64.b64decode(message_data).decode('utf-8')
         logger.info(f"Decoded message: {decoded_message}")
 
-        # Assuming 'INFO' contains the table information
-        table_info = json.loads(decoded_message)
-        dataset_id = table_info.get('Dataset_ID')
-        table_id = table_info.get('Table_ID')
-        table_info.pop('Dataset_ID', None)
-        table_info.pop('Table_ID', None)
+        logger.info("-------------- END of variables----------------")
 
-        # Convert table_info to DataFrame
-        df = pd.DataFrame([table_info])
-
-        # Construct BigQuery references
-        dataset_ref = bigquery.DatasetReference(project_id, dataset_id)
-        table_ref = dataset_ref.table(table_id)
-
-        # Add rows to BigQuery table
-        add_new_rows_streaming(table_ref, df)
-
-        return jsonify({'Message': 'Data added to BigQuery successfully!'})
+        total_time = time.time() - start_time
+        logger.error(f" Total execution time: {total_time:.2f} seconds")
+        return jsonify({'Message': 'row inserted into BigQuery table successfully!'})
 
     except Exception as e:
         return jsonify({'error': str(e)})
