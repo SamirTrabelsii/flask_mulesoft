@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <bucket>
+    <name>fivetran_flows</name>
+      <dataset>
+        <name>dataplatform</name>
+        <table>
+          <name>contents</name>
+          <separator>;</separator>
+        </table>
+        <table>
+          <name>users</name>
+          <primary-keys>
+            <key>accountId</key>
+          </primary-keys>
+          <separator>;</separator>
+        </table>
+        <table>
+          <name>players</name>
+          <primary-keys>
+            <key>Name</key>
+          </primary-keys>
+          <separator>,</separator>
+        </table>
+        <table>
+          <name>spaces</name>
+          <primary-keys>
+            <key>id</key>
+          </primary-keys>
+          <separator>;</separator>
+        </table>
+        <table>
+          <name>planets</name>
+          <primary-keys>
+            <key>Name</key>
+            <key>Type</key>
+          </primary-keys>
+          <separator>,</separator>
+        </table>
+      </dataset>
+  </bucket>
+</configuration>
