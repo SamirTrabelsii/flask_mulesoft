@@ -585,24 +585,14 @@ def convert_csv_to_bigquery_streaming():
 
 @app.route('/streaming_mule', methods=['GET', 'POST'])
 def insert_to_bigquery_streaming_mule():
-    print(f"start ingestion in streaming via mulesoft")
+    envelope = request.get_json()
+    if not envelope:
+        return 'No Pub/Sub message received', 400
 
-    start_time = time.time()
+    pubsub_message = envelope['message']
+    data = base64.b64decode(pubsub_message['data']).decode('utf-8')
 
-    # Parse the incoming CloudEvent
-    event = json.loads(request.data)
-    print(f"Event Request received to /Streaming_Mule endpoint: {event}")
-
-    # Extract and decode the message data
-    message_data = event['message']['data']
-    decoded_message = base64.b64decode(message_data).decode('utf-8')
-    print(f"Decoded message: {decoded_message}")
-
-    print("-------------- END of variables----------------")
-
-    total_time = time.time() - start_time
-    print(f" Total execution time: {total_time:.2f} seconds")
-    return jsonify({'Message': 'row inserted into BigQuery table successfully!'})
+    return 'Message received and processed', 200
 
 
 if __name__ == "__main__":
