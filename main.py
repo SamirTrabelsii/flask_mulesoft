@@ -600,6 +600,8 @@ def insert_to_bigquery_streaming_mule():
         logger.info(f"mo7tawa message decoded {data_decoded} ")
         # Get the base64 encoded data from the message
         data_encoded2 = event.get_data()['message']['data']
+        logger.info(f"payload ekher {data_encoded2} ")
+
         # Decode the base64 encoded data
         data_decoded2 = base64.b64decode(data_encoded2).decode('utf-8')
         # Parse the decoded JSON data
