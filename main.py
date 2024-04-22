@@ -595,7 +595,8 @@ def insert_to_bigquery_streaming_mule():
         logger.info(f"Event Request received to /Streaming_Mule endpoint ")
         logger.info(event)
         message = event.get_data()['message']
-        logger.info(f"mo7tawa message {message} ")
+        data_decoded = base64.b64decode(message).decode('utf-8')
+        logger.info(f"mo7tawa message {data_decoded} ")
         """"
         attributes = event.get_data()['message']['attributes']
         logger.info(f"mo7tawa attributes {attributes} ")
