@@ -594,7 +594,7 @@ def insert_to_bigquery_streaming_mule():
         print(json.dumps(event, indent=2))  # Imprime l'événement pour le débogage
 
         # Extraire les données du message Pub/Sub
-        message_data = base64.b64decode(event['data']).decode('utf-8')
+        message_data = json.loads(event['data']['message']['data'])
         print("Données du message Pub/Sub :")
         print(message_data)
 
