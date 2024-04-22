@@ -595,27 +595,15 @@ def insert_to_bigquery_streaming_mule():
         logger.info(f"Event Request received to /Streaming_Mule endpoint ")
         logger.info(event)
         message = event.get_data()['message']
+        logger.info(f"mo7tawa message {message} ")
         data_decoded = base64.b64decode(message).decode('utf-8')
-        logger.info(f"mo7tawa message {data_decoded} ")
-        """"
-        attributes = event.get_data()['message']['attributes']
-        logger.info(f"mo7tawa attributes {attributes} ")
-        """
-        # Assuming 'event' contains the message received from Pub/Sub
-
+        logger.info(f"mo7tawa message decoded {data_decoded} ")
         # Get the base64 encoded data from the message
-        data_encoded = event.get_data()['data']['message']['data']
         data_encoded2 = event.get_data()['message']['data']
-
         # Decode the base64 encoded data
-        data_decoded = base64.b64decode(data_encoded).decode('utf-8')
         data_decoded2 = base64.b64decode(data_encoded2).decode('utf-8')
-
         # Parse the decoded JSON data
-        payload = json.loads(data_decoded)
         payload2 = json.loads(data_decoded2)
-
-        logger.info(f"payload mel CHATGPT {payload} ")
         logger.info(f"payload ekher {payload2} ")
 
         dataset_id = event.get_data()['message']['Dataset_ID']
