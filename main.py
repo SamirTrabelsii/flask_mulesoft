@@ -585,25 +585,26 @@ def convert_csv_to_bigquery_streaming():
 
 @app.route('/streaming_mule', methods=['GET', 'POST'])
 def insert_to_bigquery_streaming_mule():
-    print(f"start ingestion in streaming via mulesoft")
+    print("Début du traitement de l'événement Eventarc")
 
-    start_time = time.time()
+    # Vérifier si la requête a le format attendu
+    if request.headers.get('Content-Type') == 'application/cloudevents+json':
+        event = request.json
+        print("Événement Eventarc reçu :")
+        print(json.dumps(event, indent=2))  # Imprime l'événement pour le débogage
 
-    # Parse the incoming CloudEvent
-    event = json.loads(request.data)
-    print(f"Event Request received to /Streaming_Mule endpoint: {event}")
+        # Extraire les données du message Pub/Sub
+        message_data = base64.b64decode(event['data']).decode('utf-8')
+        print("Données du message Pub/Sub :")
+        print(message_data)
 
-    # Extract and decode the message data
-    message_data = event['message']['data']
-    decoded_message = base64.b64decode(message_data).decode('utf-8')
-    print(f"Decoded message: {decoded_message}")
+        # Traiter les données du message ici (par exemple, les envoyer à BigQuery)
+        # process_message_data(message_data)
 
-    print("-------------- END of variables----------------")
-
-    total_time = time.time() - start_time
-    print(f" Total execution time: {total_time:.2f} seconds")
-    return jsonify({'Message': 'row inserted into BigQuery table successfully!'})
-
+        print("Fin du traitement de l'événement Eventarc")
+        return jsonify({'status': 'success'}), 200
+    else:
+        return jsonify({'error': 'Mauvais format de données'}), 400
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
