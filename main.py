@@ -218,7 +218,6 @@ def add_new_rows(blob, table_ref, new_rows, bucket_name):
 
 
 # Modified
-
 def add_new_rows_streaming(table_ref, new_rows):
     logger.info("-------------- Adding rows in Table via Mule | Delta Mode -----------------")
     new_rows['file_source'] = "via Mulesoft"
@@ -590,44 +589,33 @@ def insert_to_bigquery_streaming_mule():
 
     start_time = time.time()
     try:
-        # Create a CloudEvent object from the incoming request
-        event = from_http(request.headers, request.data)
-        logger.info(f"Event Request received to /Streaming_Mule endpoint ")
-        logger.info(event)
-        message = event.get_data()['message']
-        logger.info(f"mo7tawa message {message} ")
-        data_decoded = base64.b64decode(message).decode('utf-8')
-        logger.info(f"mo7tawa message decoded {data_decoded} ")
-        # Get the base64 encoded data from the message
-        data_encoded2 = event.get_data()['message']['data']
-        logger.info(f"payload ekher {data_encoded2} ")
+        # Parse the incoming CloudEvent
+        event = json.loads(request.data)
+        logger.info(f"Event Request received to /Streaming_Mule endpoint: {event}")
 
-        # Decode the base64 encoded data
-        data_decoded2 = base64.b64decode(data_encoded2).decode('utf-8')
-        # Parse the decoded JSON data
-        payload2 = json.loads(data_decoded2)
-        logger.info(f"payload ekher {payload2} ")
+        # Extract message data
+        message_data = event['data']['message']['data']
+        decoded_message = base64.b64decode(message_data).decode('utf-8')
+        logger.info(f"Decoded message: {decoded_message}")
 
-        dataset_id = event.get_data()['message']['Dataset_ID']
-        logger.info(f"  - dataset ID : {dataset_id}")
-        table_id = event.get_data()['message']['Table_ID']
-        logger.info(f"  - table ID: {table_id}")
-        table_info = event.get_data()['message']['INFO']
-        logger.info(f"  - table INFO: {table_info}")
+        # Assuming 'INFO' contains the table information
+        table_info = json.loads(decoded_message)
+        dataset_id = table_info.get('Dataset_ID')
+        table_id = table_info.get('Table_ID')
+        table_info.pop('Dataset_ID', None)
+        table_info.pop('Table_ID', None)
 
-        # Convert the "infos" object into a DataFrame
+        # Convert table_info to DataFrame
         df = pd.DataFrame([table_info])
-        dataset_ref = bigquery.DatasetReference(project_id, dataset_id)
-        logger.info(f"  - Dataset reference: {dataset_ref}")
 
+        # Construct BigQuery references
+        dataset_ref = bigquery.DatasetReference(project_id, dataset_id)
         table_ref = dataset_ref.table(table_id)
+
+        # Add rows to BigQuery table
         add_new_rows_streaming(table_ref, df)
 
-        logger.info("-------------- END of variables----------------")
-
-        total_time = time.time() - start_time
-        logger.error(f" Total execution time: {total_time:.2f} seconds")
-        return jsonify({'Message': 'CSV files converted to BigQuery tables successfully!'})
+        return jsonify({'Message': 'Data added to BigQuery successfully!'})
 
     except Exception as e:
         return jsonify({'error': str(e)})
