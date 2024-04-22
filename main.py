@@ -596,10 +596,10 @@ def insert_to_bigquery_streaming_mule():
         logger.info(event)
         message = event.get_data()['message']
         logger.info(f"mo7tawa message {message} ")
+        """"
         attributes = event.get_data()['message']['attributes']
         logger.info(f"mo7tawa attributes {attributes} ")
-
-
+        """
         # Assuming 'event' contains the message received from Pub/Sub
 
         # Get the base64 encoded data from the message
