@@ -227,7 +227,6 @@ def add_new_rows_streaming(table_ref, new_rows):
 
     job_config = bigquery.LoadJobConfig(
         schema=schema,
-        source_format=bigquery.SourceFormat.CSV,
         write_disposition='WRITE_APPEND'
     )
     job = bigquery_client.load_table_from_dataframe(new_rows, table_ref, job_config=job_config)
@@ -593,6 +592,11 @@ def insert_to_bigquery_streaming_mule():
         # Create a CloudEvent object from the incoming request
         event = from_http(request.headers, request.data)
         logger.info(f"Event Request received to /Streaming_Mule endpoint ")
+        logger.info(event)
+        message = event.get_data()['message']
+        logger.info(f"mo7tawa message {message} ")
+        attributes = event.get_data()['message']['attributes']
+        logger.info(f"mo7tawa attributes {attributes} ")
 
         dataset_id = event.get_data()['message']['Dataset_ID']
         logger.info(f"  - dataset ID : {dataset_id}")
