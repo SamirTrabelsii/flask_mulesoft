@@ -588,24 +588,21 @@ def insert_to_bigquery_streaming_mule():
     print(f"start ingestion in streaming via mulesoft")
 
     start_time = time.time()
-    try:
-        # Parse the incoming CloudEvent
-        event = json.loads(request.data)
-        logger.info(f"Event Request received to /Streaming_Mule endpoint: {event}")
 
-        # Extract and decode the message data
-        message_data = event['message']['data']
-        decoded_message = base64.b64decode(message_data).decode('utf-8')
-        logger.info(f"Decoded message: {decoded_message}")
+    # Parse the incoming CloudEvent
+    event = json.loads(request.data)
+    print(f"Event Request received to /Streaming_Mule endpoint: {event}")
 
-        logger.info("-------------- END of variables----------------")
+    # Extract and decode the message data
+    message_data = event['message']['data']
+    decoded_message = base64.b64decode(message_data).decode('utf-8')
+    print(f"Decoded message: {decoded_message}")
 
-        total_time = time.time() - start_time
-        logger.error(f" Total execution time: {total_time:.2f} seconds")
-        return jsonify({'Message': 'row inserted into BigQuery table successfully!'})
+    print("-------------- END of variables----------------")
 
-    except Exception as e:
-        return jsonify({'error': str(e)})
+    total_time = time.time() - start_time
+    print(f" Total execution time: {total_time:.2f} seconds")
+    return jsonify({'Message': 'row inserted into BigQuery table successfully!'})
 
 
 if __name__ == "__main__":
