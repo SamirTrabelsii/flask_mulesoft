@@ -583,28 +583,30 @@ def convert_csv_to_bigquery_streaming():
         return jsonify({'error': str(e)})
 
 
-@app.route('/streaming_mule', methods=['GET', 'POST'])
-def insert_to_bigquery_streaming_mule():
-    print("Début du traitement de l'événement Eventarc")
+@app.route("/streamingmule", methods=["POST"])
+def index():
+    """Receive and parse Pub/Sub messages."""
+    envelope = request.get_json()
+    if not envelope:
+        msg = "no Pub/Sub message received"
+        print(f"error: {msg}")
+        return f"Bad Request: {msg}", 400
 
-    # Vérifier si la requête a le format attendu
-    if request.headers.get('Content-Type') == 'application/cloudevents+json':
-        event = request.json
-        print("Événement Eventarc reçu :")
-        print(json.dumps(event, indent=2))  # Imprime l'événement pour le débogage
+    if not isinstance(envelope, dict) or "message" not in envelope:
+        msg = "invalid Pub/Sub message format"
+        print(f"error: {msg}")
+        return f"Bad Request: {msg}", 400
 
-        # Extraire les données du message Pub/Sub
-        message_data = json.loads(event['data']['message']['data'])
-        print("Données du message Pub/Sub :")
-        print(message_data)
+    pubsub_message = envelope["message"]
 
-        # Traiter les données du message ici (par exemple, les envoyer à BigQuery)
-        # process_message_data(message_data)
+    name = "World"
+    if isinstance(pubsub_message, dict) and "data" in pubsub_message:
+        name = base64.b64decode(pubsub_message["data"]).decode("utf-8").strip()
 
-        print("Fin du traitement de l'événement Eventarc")
-        return jsonify({'status': 'success'}), 200
-    else:
-        return jsonify({'error': 'Mauvais format de données'}), 400
+    print(f"Hello {name}!")
+
+    return ("", 204)
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
