@@ -223,6 +223,8 @@ def add_new_rows_streaming(table_ref, new_rows):
     new_rows['file_source'] = "via Mulesoft"
     new_rows['insertion_timestamp'] = pd.to_datetime('now')
     new_rows['ingestion_timestamp'] = pd.to_datetime('now')
+
+
     schema = [bigquery.SchemaField(col, "STRING") for col in new_rows.columns]
 
     job_config = bigquery.LoadJobConfig(
@@ -583,7 +585,7 @@ def convert_csv_to_bigquery_streaming():
         return jsonify({'error': str(e)})
 
 
-@app.route("/streamingmule", methods=["POST"])
+@app.route("/", methods=["POST"])
 def index():
     """Receive and parse Pub/Sub messages."""
     envelope = request.get_json()
@@ -599,13 +601,48 @@ def index():
 
     pubsub_message = envelope["message"]
 
-    name = "World"
     if isinstance(pubsub_message, dict) and "data" in pubsub_message:
-        name = base64.b64decode(pubsub_message["data"]).decode("utf-8").strip()
+        message = base64.b64decode(pubsub_message["data"]).decode("utf-8").strip()
+        formatted_message = ""
+        for line in message.splitlines():
+            formatted_message += line.strip()
 
-    print(f"Hello {name}!")
+        data = json.loads(formatted_message)
+        dataset_id = data.get("Dataset_ID")
+        table_id = data.get("Table_ID")
+        info = data.get("INFO", {})
 
-    return ("", 204)
+        df = pd.DataFrame([info])  # Create DataFrame from the INFO dictionary
+        logger.info(f"  - dataframe : {df}")
+
+        logger.info(f"  - dataset ID : {dataset_id}")
+        logger.info(f"  - table ID: {table_id}")
+        logger.info(f"  - table INFO: {info}")
+
+        dataset_ref = bigquery.DatasetReference(project_id, dataset_id)
+        logger.info(f"  - Dataset reference: {dataset_ref}")
+
+        table_ref = dataset_ref.table(table_id)
+        logger.info(f"  - Table reference: {table_ref}")
+
+        table_exists = check_table_existence(dataset_ref, table_id)
+
+        # Apply data type conversion to the entire DataFrame
+        df = df.map(lambda x: str(x) if pd.notna(x) else None)
+        # df = df.fillna('YOUR_NULL_VALUE_REPRESENTATION', dtype='str') #for large datasets
+        df = convert_df_to_str(df)
+        # df = convert_nan_to_int(df)
+
+        if not table_exists:
+            logger.info("--------------Table not exist-----------------")
+        else:
+            logger.info("-------------- Table exist-----------------")
+            # Retrieve the existing schema
+            existing_schema = bigquery_client.get_table(table_ref).schema
+            logger.info(f" Existing schema  : {existing_schema}")
+            add_new_rows_streaming(table_ref, df)
+
+    return jsonify({'Message': 'inserted row to BigQuery tables successfully!'})
 
 
 if __name__ == "__main__":
