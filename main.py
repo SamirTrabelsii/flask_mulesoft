@@ -228,7 +228,7 @@ def add_new_rows_streaming(table_ref, new_rows,existing_schema):
 
     if not schemas_are_compatible(existing_schema, schema):
         raise ValueError("DataFrame schema is incompatible with existing table schema")
-    
+
     job_config = bigquery.LoadJobConfig(
         schema=schema,
         write_disposition='WRITE_APPEND'
