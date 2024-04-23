@@ -218,15 +218,17 @@ def add_new_rows(blob, table_ref, new_rows, bucket_name):
 
 
 # Modified
-def add_new_rows_streaming(table_ref, new_rows):
+def add_new_rows_streaming(table_ref, new_rows,existing_schema):
     logger.info("-------------- Adding rows in Table via Mule | Delta Mode -----------------")
     new_rows['file_source'] = "via Mulesoft"
     new_rows['insertion_timestamp'] = pd.to_datetime('now')
     new_rows['ingestion_timestamp'] = pd.to_datetime('now')
 
-
     schema = [bigquery.SchemaField(col, "STRING") for col in new_rows.columns]
 
+    if not schemas_are_compatible(existing_schema, schema):
+        raise ValueError("DataFrame schema is incompatible with existing table schema")
+    
     job_config = bigquery.LoadJobConfig(
         schema=schema,
         write_disposition='WRITE_APPEND'
@@ -640,7 +642,7 @@ def index():
             # Retrieve the existing schema
             existing_schema = bigquery_client.get_table(table_ref).schema
             logger.info(f" Existing schema  : {existing_schema}")
-            add_new_rows_streaming(table_ref, df)
+            add_new_rows_streaming(table_ref, df,existing_schema)
 
     return jsonify({'Message': 'inserted row to BigQuery tables successfully!'})
 
