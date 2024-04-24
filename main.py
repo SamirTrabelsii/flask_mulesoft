@@ -218,16 +218,13 @@ def add_new_rows(blob, table_ref, new_rows, bucket_name):
 
 
 # Modified
-def add_new_rows_streaming(table_ref, new_rows,existing_schema):
+def add_new_rows_streaming(table_ref, new_rows):
     logger.info("-------------- Adding rows in Table via Mule | Delta Mode -----------------")
     new_rows['file_source'] = "via Mulesoft"
     new_rows['insertion_timestamp'] = pd.to_datetime('now')
     new_rows['ingestion_timestamp'] = pd.to_datetime('now')
 
     schema = [bigquery.SchemaField(col, "STRING") for col in new_rows.columns]
-
-    if not schemas_are_compatible(existing_schema, schema):
-        raise ValueError("DataFrame schema is incompatible with existing table schema")
 
     job_config = bigquery.LoadJobConfig(
         schema=schema,
@@ -629,20 +626,23 @@ def index():
 
         table_exists = check_table_existence(dataset_ref, table_id)
 
-        # Apply data type conversion to the entire DataFrame
-        df = df.map(lambda x: str(x) if pd.notna(x) else None)
-        # df = df.fillna('YOUR_NULL_VALUE_REPRESENTATION', dtype='str') #for large datasets
-        df = convert_df_to_str(df)
-        # df = convert_nan_to_int(df)
+        # Dynamically infer schema from DataFrame
+        schema = [bigquery.SchemaField(col, "STRING") for col in df.columns]
+        logger.info(f'Blob Schema : {schema} | Columns but String typed .')
 
         if not table_exists:
             logger.info("--------------Table not exist-----------------")
         else:
             logger.info("-------------- Table exist-----------------")
-            # Retrieve the existing schema
             existing_schema = bigquery_client.get_table(table_ref).schema
+            existing_schema_without_timestamp = existing_schema[:-3]
             logger.info(f" Existing schema  : {existing_schema}")
-            add_new_rows_streaming(table_ref, df,existing_schema)
+            logger.info(f" Existing schema without timestamp  : {existing_schema_without_timestamp}")
+            # Compare the existing schema with the inferred schema
+            if not schemas_are_compatible(existing_schema_without_timestamp, schema):
+                raise ValueError("DataFrame schema is incompatible with existing table schema")
+            df = convert_df_to_str(df)
+            add_new_rows_streaming(table_ref, df)
 
     return jsonify({'Message': 'inserted row to BigQuery tables successfully!'})
 
