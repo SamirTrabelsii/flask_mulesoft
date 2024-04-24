@@ -114,11 +114,21 @@ def check_table_existence(dataset_id, table_name):
 def add_new_rows_streaming(table_ref, new_rows):
     logger.info("-------------- Adding rows in Table via Mule | Delta Mode -----------------")
     new_rows['file_source'] = "via Mulesoft"
+    """
     # Convert timestamps to strings (using temporary Series)
     for col in ['insertion_timestamp', 'ingestion_timestamp']:
         if col in new_rows:  # Check if column exists before conversion
             temp_series = pd.Series([new_rows[col]])
             new_rows[col] = temp_series.dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+    """
+    # Create temporary Series for timestamps (single element)
+    now_timestamp = pd.to_datetime('now')
+    temp_series = pd.Series([now_timestamp])
+
+    # Use dt.strftime on the Series to format timestamps
+    new_rows['insertion_timestamp'] = temp_series.dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+    new_rows['ingestion_timestamp'] = temp_series.dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+
     new_rows = new_rows.astype(str)
     schema = [bigquery.SchemaField(col, "STRING") for col in new_rows.columns]
 
