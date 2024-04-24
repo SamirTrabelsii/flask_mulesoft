@@ -110,17 +110,35 @@ def check_table_existence(dataset_id, table_name):
         return False
 
 
+def create_table_streaming(table_ref, df):
+    logger.info("-------------- Creating Table -----------------")
+    df['file_source'] = "Flux Mulesoft Streaming"
+    # Create temporary Series for timestamps (single element)
+    now_timestamp = pd.to_datetime('now')
+    temp_series = pd.Series([now_timestamp])
+
+    # Use dt.strftime on the Series to format timestamps
+    df['insertion_timestamp'] = temp_series.dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+    df['ingestion_timestamp'] = temp_series.dt.strftime('%Y-%m-%d %H:%M:%S.%f')
+
+    df = df.astype(str)
+
+    schema = [bigquery.SchemaField(col, "STRING") for col in df.columns]
+
+    job_config = bigquery.LoadJobConfig(
+        schema=schema
+    )
+
+    job = bigquery_client.load_table_from_dataframe(df, table_ref, job_config=job_config)
+
+    logger.warning(f" new row successfully ingested into BigQuery!")
+    job.result()
+
+
 # Modified
 def add_new_rows_streaming(table_ref, new_rows):
     logger.info("-------------- Adding rows in Table via Mule | Delta Mode -----------------")
-    new_rows['file_source'] = "via Mulesoft"
-    """
-    # Convert timestamps to strings (using temporary Series)
-    for col in ['insertion_timestamp', 'ingestion_timestamp']:
-        if col in new_rows:  # Check if column exists before conversion
-            temp_series = pd.Series([new_rows[col]])
-            new_rows[col] = temp_series.dt.strftime('%Y-%m-%d %H:%M:%S.%f')
-    """
+    new_rows['file_source'] = "Flux Mulesoft Streaming"
     # Create temporary Series for timestamps (single element)
     now_timestamp = pd.to_datetime('now')
     temp_series = pd.Series([now_timestamp])
@@ -190,6 +208,7 @@ def index():
 
         if not table_exists:
             logger.info("--------------Table not exist-----------------")
+            create_table_streaming(table_ref, df)
         else:
             logger.info("-------------- Table exist-----------------")
             existing_schema = bigquery_client.get_table(table_ref).schema
