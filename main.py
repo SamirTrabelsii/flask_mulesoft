@@ -196,7 +196,7 @@ def index():
             existing_schema_without_timestamp = existing_schema[:-3]
             logger.info(f" Existing schema  : {existing_schema}")
             logger.info(f" Existing schema without timestamp  : {existing_schema_without_timestamp}")
-            # Compare the existing schema with the inferred schema
+
             if not schemas_are_compatible(existing_schema_without_timestamp, schema):
                 raise ValueError("DataFrame schema is incompatible with existing table schema")
             df = convert_df_to_str(df)
